@@ -1,5 +1,5 @@
 import React from "react";
-import CartItem from "./CartItem/CartItem";
+import CartItem from "./CartItem";
 import "./Cart.css";
 
 /*

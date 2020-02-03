@@ -1,16 +1,38 @@
-import React from "react";
+import React, { useState } from "react";
+import { Elements, StripeProvider } from "react-stripe-elements";
 import items from "./api/items";
-import logo from "./logo.svg";
 import Product from "./Components/Product/Product";
+import Cart from "./Components/Cart/Cart";
+import CheckoutForm from "./Components/CheckoutForm/CheckoutForm";
+import logo from "./logo.svg";
 import "./App.css";
 
-/* 
-here we are importing our items from our API and adding basic layout
-then we are rendering our products and mapping over our item array and turning the item in array into a product component
-by passing the required props to each product along with key prop to update the DOM
-*/
-
 export default function App() {
+  const [itemsInCart, setItemsInCart] = useState([]);
+
+  const handleAddToCartClick = id => {
+    setItemsInCart(itemsInCart => {
+      const itemInCart = itemsInCart.find(item => item.id === id);
+
+      // if item is already in cart, update the quantity
+      if (itemInCart) {
+        return itemsInCart.map(item => {
+          if (item.id !== id) return item;
+          return { ...itemInCart, quantity: item.quantity + 1 };
+        });
+      }
+
+      // otherwise, add new item to cart
+      const item = items.find(item => item.id === id);
+      return [...itemsInCart, { ...item, quantity: 1 }];
+    });
+  };
+
+  const totalCost = itemsInCart.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
   return (
     <div className="App">
       <header className="App-header">
@@ -20,9 +42,22 @@ export default function App() {
       <main className="App-shop">
         <div className="App-products">
           {items.map(item => (
-            <Product key={item.title} title={item.title} price={item.price} />
+            <Product
+              key={item.title}
+              title={item.title}
+              price={item.price}
+              onAddToCartClick={() => handleAddToCartClick(item.id)}
+            />
           ))}
         </div>
+        <Cart itemsInCart={itemsInCart} totalCost={totalCost} />
+        {itemsInCart.length > 0 && (
+          <StripeProvider apiKey="pk_test_kmI4A7dxswHsdiBbSXfwOTFu00uZ0l3BMH">
+            <Elements>
+              <CheckoutForm totalCost={totalCost} />
+            </Elements>
+          </StripeProvider>
+        )}
       </main>
     </div>
   );
